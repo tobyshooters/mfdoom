@@ -19,6 +19,10 @@ emolex = util.parseEmoLex("./data/emolex.txt")
 acceptable_verse_types = ["hook", "chorus", "verse", "bridge", "intro", "outro",\
         "prechorus", "postchorus", "prehook", "posthook", "interlude", "refrain", "drop"]
 
+# TODO:
+# Number of distinct rhyming phonemes
+# Number of rhyming syllable pairs
+
 def extractFeatures(song):
     # Maybe incorporate parts of speech with NLTK
     title, artist, raw_lyrics, _, _ = song
@@ -76,38 +80,11 @@ def extractFeatures(song):
     # pp.pprint(util.merge_dicts(verse_types, affect_categories, pos_counts, features))
     return util.merge_dicts(verse_types, affect_categories, pos_counts, features)
 
-# TODO:
-# Number of distinct rhyming phonemes
-# Number of rhyming syllable pairs
-
-# Feature Extraction
-def createDataset(limit):
-    db = sqlite3.connect("data/final")
-    c = db.cursor()
-    songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
-                            FROM songs WHERE lyrics is not NULL {}'''.format(limit)).fetchall()
-
-    raw_scores = []
-    raw_features = []
-
-    for i, s in enumerate(songs):
-        raw_features.append(extractFeatures(s))
-        raw_scores.append(util.calculateScore(s))
-
-        if i % 100 == 0: 
-            print "Features done: ", i 
-
-    print "Caching features..."
-    util.cacheDataset("data/features2", raw_features, raw_scores)
-    print "Done"
-
-    return raw_features, raw_scores
-
 def getFeatures(cached, limit):
     if cached:
         raw_features, raw_scores = util.getCachedDataset("data/features2")
     else:
-        raw_features, raw_scores = createDataset(limit)
+        raw_features, raw_scores = util.createDataset("data/features2", extractFeatures, limit)
 
     vec = DictVectorizer()
     features = vec.fit_transform(raw_features)

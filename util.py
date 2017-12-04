@@ -2,7 +2,28 @@
 from collections import defaultdict
 import ast
 import matplotlib.pyplot as plt
+import sqlite3
 import numpy as np
+
+def createDataset(name, extract_fn, limit):
+    db = sqlite3.connect("data/final")
+    c = db.cursor()
+    songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
+                            FROM songs WHERE lyrics is not NULL {}'''.format(limit)).fetchall()
+
+    raw_scores = []
+    raw_features = []
+
+    for i, s in enumerate(songs):
+        raw_features.append(extract_fn(s))
+        raw_scores.append(calculateScore(s))
+        if i % 100 == 0: 
+            print "Features done: ", i 
+
+    print "Caching features..."
+    cacheDataset(name, raw_features, raw_scores)
+    print "Done"
+    return raw_features, raw_scores
 
 def calculateScore(song):
     # Normalizes best score and multiplies by number of weeks

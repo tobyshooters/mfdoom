@@ -52,31 +52,11 @@ def extractFeatures(song):
 
     return song_temporal_features
 
-def createDataset(limit):
-    db = sqlite3.connect("data/final")
-    c = db.cursor()
-    songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
-                            FROM songs WHERE lyrics is not NULL {}'''.format(limit)).fetchall()
-
-    raw_scores = []
-    raw_features = []
-
-    for i, s in enumerate(songs):
-        raw_features.append(extractFeatures(s))
-        raw_scores.append(util.calculateScore(s))
-        #sequence.pad_sequence(X_train, maxlen)
-
-    print "Caching features..."
-    util.cacheDataset("data/recurrent_features", raw_features, raw_scores)
-    print "Done"
-
-    return raw_features, raw_scores
-
 def getFeatures(cached, limit):
     if cached:
         raw_features, raw_scores = util.getCachedDataset("data/recurrent_features")
     else:
-        raw_features, raw_scores = createDataset(limit)
+        raw_features, raw_scores = util.createDataset("data/recurrent_features", extractFeatures, limit)
 
     vec = DictVectorizer()
     features = vec.fit_transform(raw_features)
