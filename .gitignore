@@ -1,0 +1,8 @@
+.DS_Store
+.Python
+*.pyc
+config.py
+bin
+include
+lib
+man

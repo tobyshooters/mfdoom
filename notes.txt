@@ -1,0 +1,60 @@
+To Do:
+1. X More data from rap-songs
+2. X Parts-of-speech parameters
+3. X Validation sets for hyperparameters
+4. X Run Linear Regression
+5. X Run simple neural network
+6. X Try deep learning
+7.   Restructure data for RNN
+8.   Run a simple LSTM
+9.   Create ensemble NN
+(Artificial Deadline: 8pm)
+10.  Try to extrapolate some powerful features back to real world
+11.  Write up for poster with cool examples
+
+Poster:
+- Images: RNN example, song lyrics with highlights, MF Doom and Lil Pump in Header
+- Motivation: MF DOOM, mumble rap, Gucci Gang vs Kendrick
+- Infrastructure: Keras + Data pipeline
+- Approach: initial linear regression, ann, rnn
+- Results: shitty initial results
+
+RESULTS:
+- Init: abysmal, 579 dimension vs 1300 samples
+- More data, without popular words
+- Linear Regression: MSE, MAE: [3.0843481947260663, 0.44543924916379807]
+- Even more data, parts of speech
+- Initial results looking really good, due to data clean up and POS features
+
+LINEAR REGRESSION, NO REGULARIZATION
+Eta: 100, 200, ... 1000
+Batch: 10, 60, ... 260
+
+Best MSE:  ((500, 160), (0.022724324069957769, 0.12219747045024985))
+Test:                   [0.024850266659435842, 0.12438657282525477]
+
+Best MAE:  ((700, 110), (0.022831983066513836, 0.12204506947319217))
+Test:                   [0.067142154286588041, 0.17473956744504882]
+
+LINEAR REGRESSION WITH REGULARIZATION, FIXED @ 500, 160
+{0.001: [0.035338469546883217, 0.13143438181946368],
+ 0.01: [0.026493842410981763, 0.12361872852010865],
+ 0.1: [0.041973131328496657, 0.150110208322911],
+ 1: [0.071950444268796279, 0.15600183008478688]}
+TEST 0.01:  [0.030112404329112812, 0.12209215128346335]
+
+SINGLE-LAYER NEURAL NETWORK
+Eta: 500, 600, 700
+Batch: 80, 100, ... 180
+
+Best MSE:  ((9, 500, 160), [0.023045934205993119, 0.12261950605956266])
+Best MAE:  ((9, 500, 160), [0.023045934205993119, 0.12261950605956266])
+Test:                      [0.084720803401138203, 0.16915178236076098]
+
+CHANGE OF SCORING VALUES TO PERCENTILE IN ORDER TO GET SPREAD OF DATA
+ETA 500, BATCH 160, 9 HIDDEN NODES
+LR:  [0.094442274091364464, 0.24003051642627152]
+NN:  [0.080238319901977412, 0.24034387061867532]
+
+BEST ETA, BATCH FOR LR IS 700, 265
+AROUND THE SAME FOR NN
