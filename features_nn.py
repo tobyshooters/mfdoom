@@ -16,25 +16,22 @@ from nltk.tokenize import RegexpTokenizer
 
 emolex = util.parseEmoLex("./data/emolex.txt")
 
-acceptable_verse_types = ["hook", "chorus", "verse", "bridge", "intro", "outro",\
-        "prechorus", "postchorus", "prehook", "posthook", "interlude", "refrain", "drop"]
-
 # TODO:
 # Number of distinct rhyming phonemes
 # Number of rhyming syllable pairs
+acceptable_verse_types = ["hook", "chorus", "verse", "bridge", "intro", "outro",\
+        "prechorus", "postchorus", "prehook", "posthook", "interlude", "refrain", "drop"]
 
 def extractFeatures(song):
     # Maybe incorporate parts of speech with NLTK
     title, artist, raw_lyrics, _, _ = song
     lyrics = ast.literal_eval(raw_lyrics)
-    tokenizer = RegexpTokenizer(r'\w+')
-    token_lyrics = [tokenizer.tokenize(line) for line in lyrics]
 
     verse_types = defaultdict(int)
     affect_categories = defaultdict(int)
     word_count = defaultdict(int)
     line_count = 0
-    number_stanzas = -3 # Tokenizing Bug
+    number_stanzas = 0
 
     # Parts of Speech
     flat_lyrics = [word.lower() for line in lyrics for word in line]
@@ -43,7 +40,7 @@ def extractFeatures(song):
     del pos_counts["X"]
     del pos_counts["."]
 
-    for line in token_lyrics:
+    for line in lyrics:
         if not line:
             # Number of verses
             number_stanzas += 1

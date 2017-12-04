@@ -1,17 +1,19 @@
+import tensorflow as tf
+import numpy as np
+# Consistent testing
+np.random.seed(7)
+tf.set_random_seed(7)
 from keras import regularizers
 from keras.models import Sequential
 from keras.layers import Dense
 from sklearn.model_selection import train_test_split
-import numpy as np
 import pprint
 pp = pprint.PrettyPrinter()
 import features_nn
 
-# Consistent testing
-np.random.seed(7)
 
 print "Extracting features..."
-X, Y = features_nn.getFeatures(cached=False, limit="")
+X, Y = features_nn.getFeatures(cached=True, limit="")
 print "Done."
 
 num, dim = X.shape
@@ -22,14 +24,15 @@ train_num = X_train.shape[0]
 
 def linearRegression(theta=0.01):
     model = Sequential()
-    model.add(Dense(1, input_dim=dim, kernel_initializer='normal', kernel_regularizer=regularizers.l1(theta)))
+    model.add(Dense(1, input_dim=dim, kernel_initializer='normal', activation='sigmoid',
+        kernel_regularizer=regularizers.l1(theta)))
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
     return model
 
 def neuralNetwork(hidden_nodes=9):
     model = Sequential()
     model.add(Dense(hidden_nodes, input_dim=dim, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(1))
+    model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
     return model
 
@@ -37,13 +40,13 @@ def deepNeuralNetwork():
     model = Sequential()
     model.add(Dense(9, input_dim=dim, kernel_initializer='normal', activation='relu'))
     model.add(Dense(5, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(1))
+    model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
     return model
 
 def evaluateModel(m, val=False, eta=500, batch=160):
     # Runs model given parameters
-    m.fit(X_train.todense(), Y_train, epochs=eta, batch_size=batch)
+    m.fit(X_train.todense(), Y_train, epochs=eta, batch_size=batch, verbose=0, shuffle=False)
     if val:
         results =  m.evaluate(X_val.todense(), Y_val, verbose=0)
     else:
@@ -69,7 +72,7 @@ def hyperOptimize():
     ln = linearRegression(0)
     result = {}
     for eta in range(300, 1001, 100):
-        for batch in range(20, 301, 35):
+        for batch in range(1, 302, 25):
             result[(eta, batch)] = evaluateModel(ln, True, eta, batch)
 
     resultAnalysis(result)
@@ -82,6 +85,7 @@ def optimizeRegularization():
         result[(theta)] = evaluateModel(ln, True)
 
     pp.pprint(result)
+    resultAnalysis(result)
 
 def hiddenOptimizeNeural():
     # Get best number of hidden nodes for one-layer NN
@@ -98,9 +102,11 @@ def hiddenOptimizeNeural():
     pp.pprint(result)
     resultAnalysis(result)
 
-lr = linearRegression(0.01)
-res_lr = evaluateModel(lr, False, 700, 265)
+hyperOptimize()
+# lr = linearRegression(0.01)
 # nn = neuralNetwork()
-# res_nn = evaluateModel(nn, False, 500, 160)
-print "LR: ", res_lr
-# print "NN: ", res_nn
+# for i in range(5):
+#     res_lr = evaluateModel(lr, False, 700, 265)
+#     res_nn = evaluateModel(nn, False, 500, 160)
+#     print "LR: ", res_lr
+#     print "NN: ", res_nn

@@ -2,6 +2,7 @@ from keras import regularizers
 from keras.models import Sequential
 from keras.layers import Dense
 from sklearn.model_selection import train_test_split
+import tensorflow as tf
 import numpy as np
 import pprint
 pp = pprint.PrettyPrinter()
@@ -9,6 +10,7 @@ import features_rnn
 
 # Consistent testing
 np.random.seed(7)
+tf.set_random_seed(7)
 
 print "Extracting features..."
 X, Y = features_rnn.getFeatures(cached=True, limit="")

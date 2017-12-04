@@ -11,17 +11,16 @@ from sklearn.feature_extraction import DictVectorizer
 import nltk
 from nltk.tokenize import RegexpTokenizer
 
+emolex = util.parseEmoLex("./data/emolex.txt")
+
 def extractFeatures(song):
     # For each song, return a list of features corresponding to each line of the song
     # Note that the length of the list varies and therefore it will need to be padded
-
-    title, artist, raw_lyrics, _, _ = s
+    title, artist, raw_lyrics, _, _ = song
     lyrics = ast.literal_eval(raw_lyrics)
-    tokenizer = RegexpTokenizer(r'\w+')
-    token_lyrics = [tokenizer.tokenize(line) for line in lyrics]
 
     song_temporal_features = []
-    for line in token_lyrics:
+    for line in lyrics:
         word_count = defaultdict(int)
         affect_categories = defaultdict(int)
 
@@ -44,7 +43,7 @@ def extractFeatures(song):
         # GENERIC LINE FEATURES
         line_features = {
                 "word_count": sum(word_count.values()),
-                "distinct_words": len(word_counts.keys())
+                "distinct_words": len(word_count.keys())
                 }
 
         features = util.merge_dicts(affect_categories, pos_counts, line_features)

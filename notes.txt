@@ -26,6 +26,8 @@ RESULTS:
 - Even more data, parts of speech
 - Initial results looking really good, due to data clean up and POS features
 
+### THIS IS FAKE NEWS ######################################
+
 LINEAR REGRESSION, NO REGULARIZATION
 Eta: 100, 200, ... 1000
 Batch: 10, 60, ... 260
@@ -58,3 +60,5 @@ NN:  [0.080238319901977412, 0.24034387061867532]
 
 BEST ETA, BATCH FOR LR IS 700, 265
 AROUND THE SAME FOR NN
+
+### END OF FAKE NEWS ######################################
