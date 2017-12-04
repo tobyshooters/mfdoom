@@ -53,7 +53,7 @@ def extractFeatures(song):
     return song_temporal_features
 
 def createDataset(limit):
-    db = sqlite3.connect("data/hiphop")
+    db = sqlite3.connect("data/final")
     c = db.cursor()
     songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
                             FROM songs WHERE lyrics is not NULL {}'''.format(limit)).fetchall()
@@ -67,7 +67,7 @@ def createDataset(limit):
         #sequence.pad_sequence(X_train, maxlen)
 
     print "Caching features..."
-    util.cacheDataset("data/recurrent_features", raw_features, scores)
+    util.cacheDataset("data/recurrent_features", raw_features, raw_scores)
     print "Done"
 
     return raw_features, raw_scores

@@ -82,7 +82,7 @@ def extractFeatures(song):
 
 # Feature Extraction
 def createDataset(limit):
-    db = sqlite3.connect("data/hiphop")
+    db = sqlite3.connect("data/final")
     c = db.cursor()
     songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
                             FROM songs WHERE lyrics is not NULL {}'''.format(limit)).fetchall()
@@ -98,7 +98,7 @@ def createDataset(limit):
             print "Features done: ", i 
 
     print "Caching features..."
-    util.cacheDataset("data/features2", raw_features, scores)
+    util.cacheDataset("data/features2", raw_features, raw_scores)
     print "Done"
 
     return raw_features, raw_scores
