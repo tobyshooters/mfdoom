@@ -1,8 +1,10 @@
+import sys
+sys.path.append('../')
 import config
 import re
 import sqlite3
 import requests
-from ../util import chunks
+from util import chunks
 from bs4 import BeautifulSoup
 import pprint
 pp = pprint.PrettyPrinter()
@@ -10,7 +12,7 @@ pp = pprint.PrettyPrinter()
 base_url = 'https://api.genius.com'
 headers = {'Authorization': 'Bearer ' + config.access_token}
 
-db = sqlite3.connect("../data/final")
+db = sqlite3.connect("../data/1990")
 c = db.cursor()
 
 def searchGenius(term):
@@ -62,30 +64,22 @@ acceptable_verse_types = ["hook", "chorus", "verse", "bridge", "intro", "outro",
 
 def process_lyrics(lyrics):
     final = []
-    # Init to True in order to skip initial new_lines
-    previous_new = True
     for line in lyrics.split("\n"):
         if line:
-            previous_new = False
-            line = line.lower() # Make everything lower
-            if line[0] == "[":
-                comment = re.findall(r"[a-z0-9!?]+", line.split(" ")[0])
-                comment = comment[0] if comment else comment
-                if comment in acceptable_verse_types:
-                    final.append("[{}]".format(comment))
-                    continue
-            alphanumeric = re.findall(r"[a-z0-9!?]+", line)
-            final.append(alphanumeric)
-        elif not previous_new:
-            # Empty line for new stanza!
-            final.append([])
-            previous_new = True
+            # Generic Processing
+            line = re.findall(r'[a-z0-9!?]+', line.lower().replace("\'", ""))
+            if line[0] in acceptable_verse_types:
+                final.append(["*" + line[0]])
+            else:
+                final.append(line)
     return final
     #return [line for line in lyrics.split("\n") if (line[0] != "[" if line else True)]
 
 # Test Lyric Scraping
-# l = lyrics_from_api('/songs/2942139')
-# c = process_lyrics(l)
+l = lyrics_from_api('/songs/2942139')
+c = process_lyrics(l)
+pp.pprint(c)
+
 def getLyrics():
     songs = c.execute(''' SELECT title, api_path FROM songs WHERE lyrics is NULL and api_path is NOT NULL''').fetchall()
     # Re-run until no results for throttling
@@ -134,4 +128,4 @@ def threadLyrics():
         db.commit()
 
 # searchApiPath()
-threadLyrics()
+# threadLyrics()

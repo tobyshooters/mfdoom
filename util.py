@@ -1,29 +1,37 @@
 # GENERAL FUNCTIONALITIES
 from collections import defaultdict
 import ast
+import re
 import matplotlib.pyplot as plt
 import sqlite3
 import numpy as np
 
 def createDataset(name, extract_fn, limit):
-    db = sqlite3.connect("data/final")
+    print "Features set: ", name
+
+    db = sqlite3.connect("data/1990")
     c = db.cursor()
     songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
                             FROM songs WHERE lyrics is not NULL {}'''.format(limit)).fetchall()
 
+    titles = []
     raw_scores = []
     raw_features = []
 
+    print "Getting doc counts for words"
+    total_doc_count = docCounts(songs)
+
     for i, s in enumerate(songs):
-        raw_features.append(extract_fn(s))
+        raw_features.append(extract_fn(s, total_doc_count))
         raw_scores.append(calculateScore(s))
+        titles.append(s[0])
         if i % 100 == 0: 
             print "Features done: ", i 
 
     print "Caching features..."
-    cacheDataset(name, raw_features, raw_scores)
+    cacheDataset(name, titles, raw_features, raw_scores)
     print "Done"
-    return raw_features, raw_scores
+    return titles, raw_features, raw_scores
 
 def calculateScore(song):
     # Normalizes best score and multiplies by number of weeks
@@ -32,18 +40,34 @@ def calculateScore(song):
     score = normalized_peak * weeks
     return score
 
-def cacheDataset(f, features, scores):
+def docCounts(songs):
+    # Number of songs in which a word appears
+    doc_count = defaultdict(int)
+    for _, _, raw_lyrics, _, _ in songs:
+        word_count = defaultdict(int)
+        lyrics = ast.literal_eval(raw_lyrics)
+        for line in lyrics:
+            for word in line:
+                alphanum = "".join(re.findall(r"[^A-Za-z0-9]+", word))
+                word_count[alphanum] += 1
+        for word in word_count:
+            doc_count[word] += 1
+    return doc_count
+
+def cacheDataset(f, titles, features, scores):
     # Writes raw data to file
     with open(f, "w") as f:
+        f.write(str(titles) + "\n")
         f.write(str(features) + "\n")
         f.write(str(scores))
 
 def getCachedDataset(f):
     # Reads raw data using ast from file
     with open(f, "r") as f:
+        titles = ast.literal_eval(f.readline())
         raw_features = ast.literal_eval(f.readline())
         scores = ast.literal_eval(f.readline())
-    return raw_features, scores
+    return titles, raw_features, scores
 
 def visualizeScores(scores):
     # Provides histogram of scores
@@ -80,3 +104,6 @@ def normalize_vector(vector):
     total = sum(vector.values())
     for k, v in vector.items():
         vector[k] = v * 1.0 / total
+
+def perc(count, total):
+    return 100.0 * count / total

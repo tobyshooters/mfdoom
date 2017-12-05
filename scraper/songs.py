@@ -4,10 +4,10 @@ from dateutil import parser
 import billboard
 
 # NOTE: using onyl peakPosition rather than average of positions
-db = sqlite3.connect("../data/final")
+db = sqlite3.connect("../data/1990")
 cursor = db.cursor()
 # cursor.execute(''' 
-#         CREATE TABLE songs(id INTEGER PRIMARY KEY, title TEXT unique, artist TEXT, peak INTEGER, weeks INTEGER)
+#         CREATE TABLE songs(id INTEGER PRIMARY KEY, title TEXT unique, artist TEXT, last_date TEXT, peak INTEGER, weeks INTEGER)
 #         ''')
 # db.commit()
 
@@ -25,23 +25,27 @@ def cleanArtist(artist):
 # Get all songs
 # Charts: Rap and RnB + Hip-Hop
 def getSongs(chart_name):
-    final_date = parser.parse("2000-01-01") # end date
-    chart = billboard.ChartData(chart_name, "2001-06-23") # start date
+    final_date = parser.parse("1990-01-01") # end date
+    current_date = "2013-02-09" # start date
+    chart = billboard.ChartData(chart_name, current_date) 
+
     while chart.previousDate:
-        print chart.previousDate
+        print current_date
 
         for song in chart:
             artist = cleanArtist(song.artist)
             cursor.execute('''
-            INSERT OR IGNORE INTO songs(title, artist, peak, weeks) VALUES(?, ?, ?, ?)
-            ''', (song.title, artist, song.peakPos, song.weeks))
+            INSERT OR IGNORE INTO songs(title, artist, last_date, peak, weeks) VALUES(?, ?, ?, ?, ?)
+            ''', (song.title, artist, current_date, song.peakPos, song.weeks))
             db.commit()
 
         prev = parser.parse(chart.previousDate)
         if prev < final_date: break
-        chart = billboard.ChartData(chart_name, chart.previousDate)
 
-    print chart.previousDate
+        current_date = chart.previousDate
+        chart = billboard.ChartData(chart_name, current_date)
+
+    print current_date
     print "Finished"
 
 # getSongs('rap-song')

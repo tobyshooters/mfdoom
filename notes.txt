@@ -62,3 +62,32 @@ BEST ETA, BATCH FOR LR IS 700, 265
 AROUND THE SAME FOR NN
 
 ### END OF FAKE NEWS ######################################
+
+LINEAR REGRESSION
+Best Overall:  ((600, 650), [0.080293487657893722, 0.24391426211000328])
+TEST @ 600, 650:            [0.089057008084518455, 0.25963867100235682]
+
+NEURAL NETWORK, TESTING FOR OPTIMAL HIDDEN NODES
+Best Overall:  ((5, 2100, 150), [0.077542537438215584, 0.23912770201552938])
+TEST:                           [0.0934672295268065, 0.26089530598883537]
+
+DEEP NEURAL NETWORK
+TEST:  [0.08634052766499177, 0.25422567538186613]
+
+RECURRENT
+restructured data, each line is the data, giving 200 datapoints per song for 3300 songs
+padding and cutting of data
+TEST dropout, recurrent_dropout = 0.2, nodes=10: [0.093869677410016658, 0.26551036819133883]
+
+IT ALWAYS SEEMS TO BE PREDICTION AROUND 0.5 += 0.15
+
+MORE FEATURES
+https://publik.tuwien.ac.at/files/PubDat_166272.pdf
+!_count
+not_words
+distinct per line
+salience via tf_idf
+richness
+common_words
+
+MORE DATA, SPLIT TRAINING ON LAST 2 YEARS

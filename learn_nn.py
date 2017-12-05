@@ -11,9 +11,8 @@ import pprint
 pp = pprint.PrettyPrinter()
 import features_nn
 
-
 print "Extracting features..."
-X, Y = features_nn.getFeatures(cached=True, limit="")
+titles, X, Y = features_nn.getFeatures(cached=True, limit="")
 print "Done."
 
 num, dim = X.shape
@@ -29,7 +28,7 @@ def linearRegression(theta=0.01):
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
     return model
 
-def neuralNetwork(hidden_nodes=9):
+def neuralNetwork(hidden_nodes=5):
     model = Sequential()
     model.add(Dense(hidden_nodes, input_dim=dim, kernel_initializer='normal', activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
@@ -38,24 +37,34 @@ def neuralNetwork(hidden_nodes=9):
 
 def deepNeuralNetwork():
     model = Sequential()
-    model.add(Dense(9, input_dim=dim, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(5, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(9, input_dim=dim, kernel_initializer='normal'))
+    model.add(Dense(5, kernel_initializer='normal'))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
     return model
 
 def evaluateModel(m, val=False, eta=500, batch=160):
     # Runs model given parameters
-    m.fit(X_train.todense(), Y_train, epochs=eta, batch_size=batch, verbose=0, shuffle=False)
+    m.fit(X_train.todense(), Y_train, epochs=eta, batch_size=batch, 
+            verbose=1, shuffle=False)
     if val:
         results =  m.evaluate(X_val.todense(), Y_val, verbose=0)
     else:
         results =  m.evaluate(X_test.todense(), Y_test, verbose=0)
 
-    # print results
-    # prediction = m.predict(X_test.todense())
-    # for i, predict in enumerate(prediction):
-    #     print predict, Y_test[i]
+    prediction = m.predict(X_test.todense())
+    for i, predict in enumerate(prediction):
+        print "--------------------------------"
+        print "Title:      ", titles[i]
+        print "Prediction: ", predict
+        print "Actual:     ", Y_test[i]
+        print "--------------------------------"
+
+    # pp.pprint(m.summary())
+    # for layer in m.layers:
+    #     pp.pprint(layer.get_config())
+    #     pp.pprint(layer.get_weights()[0])
+
     return results
 
 def resultAnalysis(result):
@@ -71,10 +80,11 @@ def hyperOptimize():
     # Get best eta and batch_size for linear regression using validation set
     ln = linearRegression(0)
     result = {}
-    for eta in range(300, 1001, 100):
-        for batch in range(1, 302, 25):
-            result[(eta, batch)] = evaluateModel(ln, True, eta, batch)
-
+    for eta in range(600, 601, 100):
+        for batch in range(400, 1011, 50):
+            res = evaluateModel(ln, True, eta, batch)
+            result[(eta, batch)] = res
+            print eta, batch, res
     resultAnalysis(result)
 
 def optimizeRegularization():
@@ -90,23 +100,24 @@ def optimizeRegularization():
 def hiddenOptimizeNeural():
     # Get best number of hidden nodes for one-layer NN
     result = {}
-    nn = neuralNetwork()
-    for eta in range(700, 1501, 100):
-        for batch in range(10, 21, 20):
+    for i in range(4, 12):
+        nn = neuralNetwork(i)
+        for eta in range(500, 2501, 100):
+            batch = 150
             res = evaluateModel(nn, True, eta, batch)
-            result[(eta, batch)] = res
+            result[(i, eta, batch)] = res
             print "=============================="
-            print eta, batch, res
+            print i, eta, batch, res
             print "=============================="
     
     pp.pprint(result)
     resultAnalysis(result)
 
-hyperOptimize()
+# hiddenOptimizeNeural()
 # lr = linearRegression(0.01)
-# nn = neuralNetwork()
+nn = neuralNetwork(15)
 # for i in range(5):
-#     res_lr = evaluateModel(lr, False, 700, 265)
-#     res_nn = evaluateModel(nn, False, 500, 160)
-#     print "LR: ", res_lr
-#     print "NN: ", res_nn
+# res_lr = evaluateModel(lr, False, 600, 150)
+res_nn = evaluateModel(nn, False, 800, 150)
+# print "LR: ", res_lr
+print "NN: ", res_nn

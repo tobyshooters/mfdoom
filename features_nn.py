@@ -1,6 +1,7 @@
 from collections import defaultdict, Counter
 import sqlite3
 import re
+import math
 import ast
 import pprint
 pp = pprint.PrettyPrinter()
@@ -22,52 +23,88 @@ emolex = util.parseEmoLex("./data/emolex.txt")
 acceptable_verse_types = ["hook", "chorus", "verse", "bridge", "intro", "outro",\
         "prechorus", "postchorus", "prehook", "posthook", "interlude", "refrain", "drop"]
 
-def extractFeatures(song):
-    # Maybe incorporate parts of speech with NLTK
+def extractFeatures(song, total_doc_count):
+# Maybe incorporate parts of speech with NLTK
     title, artist, raw_lyrics, _, _ = song
     lyrics = ast.literal_eval(raw_lyrics)
 
     verse_types = defaultdict(int)
     affect_categories = defaultdict(int)
     word_count = defaultdict(int)
+    number_count = defaultdict(int)
+    not_word_count = defaultdict(int)
+    excl_count = 0
+    ques_count = 0
     line_count = 0
     number_stanzas = 0
 
     # Parts of Speech
-    flat_lyrics = [word.lower() for line in lyrics for word in line]
+    flat_lyrics = ["".join(re.findall(r"[^A-Za-z0-9]+", word)) for line in lyrics for word in line]
     tagged = nltk.pos_tag(flat_lyrics, tagset="universal")
     pos_counts = Counter(tag for word, tag in tagged)
     del pos_counts["X"]
     del pos_counts["."]
 
     for line in lyrics:
-        if not line:
-            # Number of verses
+        if len(line) == 1 and line[0][1:] in acceptable_verse_types:
             number_stanzas += 1
-        elif len(line) == 1 and line[0].lower() in acceptable_verse_types:
             verse_types[line[0].lower()] +=1
         else:
             # Emo-lex
             line_count += 1
             for word in line:
-                word = re.sub(r"[^A-Za-z]+", '', word)
-                word_count[word] += 1
-                for affect in emolex[word]:
+                excl_count += word.count('!')
+                ques_count += word.count('?')
+                alphanum = "".join(re.findall(r"[^A-Za-z0-9]+", word))
+                if re.match(r"[0-9]", alphanum):
+                    number_count[alphanum] += 1
+                word_count[alphanum] += 1
+                if not emolex[alphanum]:
+                    not_word_count[alphanum] += 1
+                for affect in emolex[alphanum]:
                     affect_categories[affect] += 1
 
     # Singleton Features
+    total = sum(word_count.values())
+    distinct = len(word_count.keys())
+
+    tf_idf = 0
+    for term in word_count:
+        tf = word_count[term] * 1.0 / total
+        idf = math.log(3390.0 / total_doc_count[term])
+        tf_idf += tf * idf
+
     features = {
-            "word_count": sum(word_count.values()),
-            "distinct_words": len(word_count.keys()),
+            "word_count": total,
+            "!_count": excl_count,
+            "number_count": sum(number_count.values()),
+            "not_words": sum(not_word_count.values()) / total,
+            "distinct_words": distinct,
+            "distinct_words_per_line": distinct / line_count,
+            "vocab_salience": tf_idf,
+            "richness": distinct * 1.0 / total,
             "stanzas": number_stanzas,
-            "avg_stanzas": sum(word_count.values()) / number_stanzas,
+            "avg_stanzas": total / number_stanzas,
             "lines": line_count,
-            "avg_line": sum(word_count.values()) / line_count
+            "avg_line": total / line_count
             }
 
     # Too sparse!
     popular_words = {"pop_word " + word: 1 \
             for word in sorted(word_count, key=word_count.get, reverse=True)[:3]}
+
+    # https://pudding.cool/2017/09/hip-hop-words/
+    common_words = {
+            "i": util.perc(word_count["i"], total),
+            "we": util.perc(word_count["we"], total),
+            "us": util.perc(word_count["us"], total),
+            "love": util.perc(word_count["love"], total),
+            "bitch": util.perc(word_count["bitch"], total),
+            "fuck": util.perc(word_count["fuck"], total),
+            "money": util.perc(word_count["money"], total),
+            "love": util.perc(word_count["love"], total),
+            "rap": util.perc(word_count["rap"], total)
+            }
 
     # Normalization
     util.normalize_vector(verse_types)
@@ -75,13 +112,17 @@ def extractFeatures(song):
     util.normalize_vector(pos_counts)
 
     # pp.pprint(util.merge_dicts(verse_types, affect_categories, pos_counts, features))
-    return util.merge_dicts(verse_types, affect_categories, pos_counts, features)
+    return util.merge_dicts(verse_types, 
+                            affect_categories, 
+                            pos_counts, 
+                            common_words,
+                            features)
 
 def getFeatures(cached, limit):
     if cached:
-        raw_features, raw_scores = util.getCachedDataset("data/features2")
+        titles, raw_features, raw_scores = util.getCachedDataset("data/nn_features")
     else:
-        raw_features, raw_scores = util.createDataset("data/features2", extractFeatures, limit)
+        titles, raw_features, raw_scores = util.createDataset("data/nn_features", extractFeatures, limit)
 
     vec = DictVectorizer()
     features = vec.fit_transform(raw_features)
@@ -89,4 +130,4 @@ def getFeatures(cached, limit):
     perc_scores = [stats.percentileofscore(raw_scores, a, 'rank') / 100.0 for a in raw_scores]
     scores = np.array(perc_scores)
 
-    return features, np.reshape(scores, (len(scores), 1))
+    return titles, features, np.reshape(scores, (len(scores), 1))
