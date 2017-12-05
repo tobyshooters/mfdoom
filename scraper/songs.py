@@ -26,7 +26,7 @@ def cleanArtist(artist):
 # Charts: Rap and RnB + Hip-Hop
 def getSongs(chart_name):
     final_date = parser.parse("1990-01-01") # end date
-    current_date = "2013-02-09" # start date
+    current_date = "2008-03-08" # start date
     chart = billboard.ChartData(chart_name, current_date) 
 
     while chart.previousDate:
