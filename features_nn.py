@@ -69,8 +69,8 @@ def extractFeatures(song, total_doc_count):
                     affect_categories[affect] += 1
 
     # Singleton Features
-    total = sum(word_count.values())
-    distinct = len(word_count.keys())
+    total = sum(word_count.values()) * 1.0
+    distinct = len(word_count.keys()) * 1.0
 
     tf_idf = 0
     for term in word_count:
@@ -88,7 +88,7 @@ def extractFeatures(song, total_doc_count):
             "distinct_words": distinct,
             "distinct_words_per_line": distinct / line_count,
             "vocab_salience": tf_idf,
-            "richness": distinct * 1.0 / total,
+            "richness": distinct / total,
             "stanzas": number_stanzas,
             "avg_stanzas": total / number_stanzas,
             "lines": line_count,
@@ -126,10 +126,10 @@ def extractFeatures(song, total_doc_count):
 def getFeatures(cached, limit):
     if cached:
         print "Getting raw features from cache"
-        titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.getCachedDataset("data/nn_features")
+        titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.getCachedDataset("data/nn2_features")
     else:
         print "Not cached, producing new features"
-        titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.createDataset("data/nn_features", extractFeatures, limit)
+        titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.createDataset("data/nn2_features", extractFeatures, limit)
 
     vec = DictVectorizer()
     vec.fit(X_train + X_test)
@@ -143,3 +143,5 @@ def getFeatures(cached, limit):
     Y_all = np.array([stats.percentileofscore(Y_total, a, 'rank') / 100.0 for a in Y_total])
 
     return titles_train, X_train, np.reshape(Y_train, (len(Y_train), 1)), titles_test, X_test, np.reshape(Y_test, (len(Y_test), 1)), X_all, Y_all
+
+util.exampleSongs(extractFeatures)

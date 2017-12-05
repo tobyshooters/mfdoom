@@ -1,6 +1,6 @@
 from keras import regularizers
 from keras.models import Sequential
-from keras.layers import Dense, LSTM
+from keras.layers import Dense, LSTM, Merge
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 import numpy as np
@@ -28,13 +28,13 @@ print num, seq_len, dim
 X_rand_train, X_rand_test, Y_rand_train, Y_rand_test = train_test_split(X_all, Y_all, test_size=0.4, random_state=3)
 X_rand_val, X_rand_test, Y_rand_val, Y_rand_test = train_test_split(X_test, Y_test, test_size=0.4, random_state=3)
 
-# Sequential Features
-_, X_seq_train, Y_seq_train, _, X_seq_test, Y_seq_test, X_seq_all, Y_seq_all = features_nn.getFeatures(cached=True, limit="")
-X_seq_train, X_seq_val, Y_seq_train, Y_seq_val = train_test_split(X_seq_train, Y_seq_train, test_size=0.3, random_state=3)
+# Total Song Features
+_, X_tot_train, Y_tot_train, _, X_tot_test, Y_tot_test, X_tot_all, Y_tot_all = features_nn.getFeatures(cached=True, limit="")
+X_tot_train, X_tot_val, Y_tot_train, Y_tot_val = train_test_split(X_tot_train, Y_tot_train, test_size=0.3, random_state=3)
 
-# Sequential Random
-X_seq_rand_train, X_seq_rand_test, Y_seq_rand_train, Y_seq_rand_test = train_test_split(X_all, Y_all, test_size=0.4, random_state=3)
-X_seq_rand_val, X_seq_rand_test, Y_seq_rand_val, Y_seq_rand_test = train_test_split(X_test, Y_test, test_size=0.4, random_state=3)
+# Total Song Random
+X_tot_rand_train, X_tot_rand_test, Y_tot_rand_train, Y_tot_rand_test = train_test_split(X_all, Y_all, test_size=0.4, random_state=3)
+X_tot_rand_val, X_tot_rand_test, Y_tot_rand_val, Y_tot_rand_test = train_test_split(X_test, Y_test, test_size=0.4, random_state=3)
 
 def RNN():
     model = Sequential()
@@ -77,12 +77,12 @@ def evaluateModel(m, val=False, eta=500, batch=160):
     return results, results_rand
 
 def evaluateEnsemble(ens):
-    ens.fit([X_train, X_seq_train], Y_train, epochs=500, batch=500)
-    results = ens.evaluate([X_test, X_seq_test], Y_test)
+    ens.fit([X_train, X_tot_train], Y_train, epochs=500, batch_size=500)
+    results = ens.evaluate([X_test, X_tot_test], Y_test)
     print "TEMPORAL", results
 
-    ens.fit([X_rand_train, X_seq_rand_train], Y_rand_train, epochs=500, batch=500)
-    rand_results = ens.evaluate([X_rand_test, X_seq_rand_test], Y_rand_test)
+    ens.fit([X_rand_train, X_tot_rand_train], Y_rand_train, epochs=500, batch_size=500)
+    rand_results = ens.evaluate([X_rand_test, X_tot_rand_test], Y_rand_test)
 
     print "TEMPORAL", results
     print "RANDOM", rand_results

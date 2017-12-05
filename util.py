@@ -3,8 +3,21 @@ from collections import defaultdict
 import ast
 import re
 import sqlite3
+import pprint
+pp = pprint.PrettyPrinter()
 from multiprocessing import Pool
 import numpy as np
+
+def exampleSongs(extract_fn):
+    db = sqlite3.connect("data/1990")
+    c = db.cursor()
+    train_songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
+                            FROM songs WHERE lyrics is not NULL
+                            AND title LIKE 'Gucci Gang' OR title LIKE 'm.A.A.d City' ''').fetchall()
+    for song in train_songs:
+        print song[0]
+        pp.pprint(extract_fn(song, defaultdict(int)))
+
 
 def createDataset(name, extract_fn, limit):
     print "Features set: ", name
