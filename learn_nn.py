@@ -6,20 +6,23 @@ tf.set_random_seed(7)
 from keras import regularizers
 from keras.models import Sequential
 from keras.layers import Dense
+from scipy.sparse import vstack
 from sklearn.model_selection import train_test_split
 import pprint
 pp = pprint.PrettyPrinter()
 import features_nn
 
 print "Extracting features..."
-titles, X, Y = features_nn.getFeatures(cached=True, limit="")
+# Temporal features 
+titles_train, X_train, Y_train, titles_test, X_test, Y_test, X_all, Y_all = features_nn.getFeatures(cached=True, limit="")
+X_train, X_val, Y_train, Y_val = train_test_split(X_train, Y_train, test_size=0.3, random_state=3)
 print "Done."
 
-num, dim = X.shape
-# Train, Validation, Test set split: 0.7 0.21 0.09
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3, random_state=3)
-X_val, X_test, Y_val, Y_test = train_test_split(X_test, Y_test, test_size=0.3, random_state=3)
-train_num = X_train.shape[0]
+dim = X_train.shape[1]
+
+# Train and Test set are randomly distributed: 0.6, 0.24, 0.16
+X_rand_train, X_rand_test, Y_rand_train, Y_rand_test = train_test_split(X_all, Y_all, test_size=0.4, random_state=3)
+X_rand_val, X_rand_test, Y_rand_val, Y_rand_test = train_test_split(X_test, Y_test, test_size=0.4, random_state=3)
 
 def linearRegression(theta=0.01):
     model = Sequential()
@@ -43,8 +46,9 @@ def deepNeuralNetwork():
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
     return model
 
-def evaluateModel(m, val=False, eta=500, batch=160):
+def evaluateModel(m, val=False, eta=1000, batch=200):
     # Runs model given parameters
+    print "Test = 2015+"
     m.fit(X_train.todense(), Y_train, epochs=eta, batch_size=batch, 
             verbose=1, shuffle=False)
     if val:
@@ -52,39 +56,54 @@ def evaluateModel(m, val=False, eta=500, batch=160):
     else:
         results =  m.evaluate(X_test.todense(), Y_test, verbose=0)
 
-    prediction = m.predict(X_test.todense())
-    for i, predict in enumerate(prediction):
-        print "--------------------------------"
-        print "Title:      ", titles[i]
-        print "Prediction: ", predict
-        print "Actual:     ", Y_test[i]
-        print "--------------------------------"
+    print "Test = random"
+    m.fit(X_rand_train.todense(), Y_rand_train, epochs=eta, batch_size=batch, 
+            verbose=1, shuffle=False)
+    if val:
+        results_rand =  m.evaluate(X_rand_val.todense(), Y_rand_val, verbose=0)
+    else:
+        results_rand =  m.evaluate(X_rand_test.todense(), Y_rand_test, verbose=0)
+
+    # prediction = m.predict(X_test.todense())
+    # for i, predict in enumerate(prediction):
+    #     print "--------------------------------"
+    #     print "Title:      ", titles_test[i]
+    #     print "Prediction: ", predict
+    #     print "Actual:     ", Y_test[i]
+    #     print "--------------------------------"
 
     # pp.pprint(m.summary())
     # for layer in m.layers:
     #     pp.pprint(layer.get_config())
     #     pp.pprint(layer.get_weights()[0])
 
-    return results
+    return results, results_rand
 
 def resultAnalysis(result):
-    # Given a dictionary of (params) => (MSE, MAE), get best of each
-    best_mse = sorted(result.iteritems(), key=lambda (k, v): v[0])[0]
-    print "Best MSE: ", best_mse # (500, 160)
-    best_mae = sorted(result.iteritems(), key=lambda (k, v): v[1])[0]
-    print "Best MAE: ", best_mae # (700, 110)
-    best = sorted(result.iteritems(), key=lambda (k, v): v[0] + v[1])[0]
-    print "Best Overall: ", best
+    # Given a dictionary of (params) => TEMP: (MSE, MAE), RAND: (MSE, MAE), get best of each
+    best_mse_temp = sorted(result.iteritems(), key=lambda (k, v): v[0][0])[0]
+    print "Best MSE Temp: ", best_mse_temp # (500, 160)
+    best_mae_temp = sorted(result.iteritems(), key=lambda (k, v): v[0][1])[0]
+    print "Best MAE Temp: ", best_mae_temp # (700, 110)
+    best_temp = sorted(result.iteritems(), key=lambda (k, v): v[0][0] + v[0][1])[0]
+    print "Best Overall Temp: ", best_temp
+
+    best_mse_rand = sorted(result.iteritems(), key=lambda (k, v): v[1][0])[0]
+    print "Best MSE Rand: ", best_mse_rand # (500, 160)
+    best_mae_rand = sorted(result.iteritems(), key=lambda (k, v): v[1][1])[0]
+    print "Best MAE Rand: ", best_mae_rand # (700, 110)
+    best_rand = sorted(result.iteritems(), key=lambda (k, v): v[1][0] + v[1][1])[0]
+    print "Best Overall Rand: ", best_rand
 
 def hyperOptimize():
     # Get best eta and batch_size for linear regression using validation set
     ln = linearRegression(0)
     result = {}
-    for eta in range(600, 601, 100):
-        for batch in range(400, 1011, 50):
-            res = evaluateModel(ln, True, eta, batch)
-            result[(eta, batch)] = res
-            print eta, batch, res
+    for eta in range(600, 1001, 100):
+        for batch in range(200, 1001, 200):
+            res, res_rand = evaluateModel(ln, True, eta, batch)
+            result[(eta, batch)] = (res, res_rand)
+            print eta, batch, res, res_rand
     resultAnalysis(result)
 
 def optimizeRegularization():
@@ -102,22 +121,20 @@ def hiddenOptimizeNeural():
     result = {}
     for i in range(4, 12):
         nn = neuralNetwork(i)
-        for eta in range(500, 2501, 100):
-            batch = 150
-            res = evaluateModel(nn, True, eta, batch)
-            result[(i, eta, batch)] = res
-            print "=============================="
-            print i, eta, batch, res
-            print "=============================="
+        res = evaluateModel(nn, True, 2000, 150)
+        result[(i)] = res
+        print "=============================="
+        print i, res
+        print "=============================="
     
     pp.pprint(result)
     resultAnalysis(result)
 
 # hiddenOptimizeNeural()
-# lr = linearRegression(0.01)
-nn = neuralNetwork(15)
+# lr = linearRegression(0)
+nn = deepNeuralNetwork()
 # for i in range(5):
-# res_lr = evaluateModel(lr, False, 600, 150)
-res_nn = evaluateModel(nn, False, 800, 150)
-# print "LR: ", res_lr
-print "NN: ", res_nn
+# res_lr, res_lr_rand = evaluateModel(lr, False, 1000, 200)
+res_nn, res_nn_rand = evaluateModel(nn, False, 4000, 150)
+# print "LR: ", res_lr, res_lr_rand
+print "NN: ", res_nn, res_nn_rand

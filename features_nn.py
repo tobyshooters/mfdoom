@@ -36,17 +36,21 @@ def extractFeatures(song, total_doc_count):
     excl_count = 0
     ques_count = 0
     line_count = 0
-    number_stanzas = 0
+    number_stanzas = 1
 
     # Parts of Speech
-    flat_lyrics = ["".join(re.findall(r"[^A-Za-z0-9]+", word)) for line in lyrics for word in line]
+    flat_lyrics = ["".join(re.findall(r"[A-Za-z0-9]+", word)) for line in lyrics \
+            for word in line if "".join(re.findall(r"[A-Za-z0-9]+", word))]
+
     tagged = nltk.pos_tag(flat_lyrics, tagset="universal")
     pos_counts = Counter(tag for word, tag in tagged)
     del pos_counts["X"]
     del pos_counts["."]
 
     for line in lyrics:
-        if len(line) == 1 and line[0][1:] in acceptable_verse_types:
+        if not line:
+            continue
+        elif len(line) == 1 and line[0][1:] in acceptable_verse_types:
             number_stanzas += 1
             verse_types[line[0].lower()] +=1
         else:
@@ -55,11 +59,11 @@ def extractFeatures(song, total_doc_count):
             for word in line:
                 excl_count += word.count('!')
                 ques_count += word.count('?')
-                alphanum = "".join(re.findall(r"[^A-Za-z0-9]+", word))
+                alphanum = "".join(re.findall(r"[A-Za-z0-9]+", word))
                 if re.match(r"[0-9]", alphanum):
                     number_count[alphanum] += 1
                 word_count[alphanum] += 1
-                if not emolex[alphanum]:
+                if alphanum not in emolex:
                     not_word_count[alphanum] += 1
                 for affect in emolex[alphanum]:
                     affect_categories[affect] += 1
@@ -70,13 +74,15 @@ def extractFeatures(song, total_doc_count):
 
     tf_idf = 0
     for term in word_count:
-        tf = word_count[term] * 1.0 / total
-        idf = math.log(3390.0 / total_doc_count[term])
-        tf_idf += tf * idf
+        if term in total_doc_count:
+            tf = word_count[term] * 1.0 / total
+            idf = math.log(3390.0 / total_doc_count[term])
+            tf_idf += tf * idf
 
     features = {
             "word_count": total,
             "!_count": excl_count,
+            "?_count": ques_count,
             "number_count": sum(number_count.values()),
             "not_words": sum(not_word_count.values()) / total,
             "distinct_words": distinct,
@@ -95,15 +101,14 @@ def extractFeatures(song, total_doc_count):
 
     # https://pudding.cool/2017/09/hip-hop-words/
     common_words = {
-            "i": util.perc(word_count["i"], total),
-            "we": util.perc(word_count["we"], total),
-            "us": util.perc(word_count["us"], total),
-            "love": util.perc(word_count["love"], total),
-            "bitch": util.perc(word_count["bitch"], total),
-            "fuck": util.perc(word_count["fuck"], total),
-            "money": util.perc(word_count["money"], total),
-            "love": util.perc(word_count["love"], total),
-            "rap": util.perc(word_count["rap"], total)
+            "common_i": util.perc(word_count["i"], total),
+            "common_we": util.perc(word_count["we"], total),
+            "common_us": util.perc(word_count["us"], total),
+            "common_love": util.perc(word_count["love"], total),
+            "common_bitch": util.perc(word_count["bitch"], total),
+            "common_fuck": util.perc(word_count["fuck"], total),
+            "common_money": util.perc(word_count["money"], total),
+            "common_rap": util.perc(word_count["rap"], total)
             }
 
     # Normalization
@@ -120,14 +125,21 @@ def extractFeatures(song, total_doc_count):
 
 def getFeatures(cached, limit):
     if cached:
-        titles, raw_features, raw_scores = util.getCachedDataset("data/nn_features")
+        print "Getting raw features from cache"
+        titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.getCachedDataset("data/nn_features")
     else:
-        titles, raw_features, raw_scores = util.createDataset("data/nn_features", extractFeatures, limit)
+        print "Not cached, producing new features"
+        titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.createDataset("data/nn_features", extractFeatures, limit)
 
     vec = DictVectorizer()
-    features = vec.fit_transform(raw_features)
+    vec.fit(X_train + X_test)
+    X_all = vec.transform(X_train + X_test)
+    X_train = vec.transform(X_train)
+    X_test = vec.transform(X_test)
 
-    perc_scores = [stats.percentileofscore(raw_scores, a, 'rank') / 100.0 for a in raw_scores]
-    scores = np.array(perc_scores)
+    Y_total = Y_train + Y_test
+    Y_train = np.array([stats.percentileofscore(Y_total, a, 'rank') / 100.0 for a in Y_train])
+    Y_test = np.array([stats.percentileofscore(Y_total, a, 'rank') / 100.0 for a in Y_test])
+    Y_all = np.array([stats.percentileofscore(Y_total, a, 'rank') / 100.0 for a in Y_total])
 
-    return titles, features, np.reshape(scores, (len(scores), 1))
+    return titles_train, X_train, np.reshape(Y_train, (len(Y_train), 1)), titles_test, X_test, np.reshape(Y_test, (len(Y_test), 1)), X_all, Y_all

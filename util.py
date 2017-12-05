@@ -2,8 +2,8 @@
 from collections import defaultdict
 import ast
 import re
-import matplotlib.pyplot as plt
 import sqlite3
+from multiprocessing import Pool
 import numpy as np
 
 def createDataset(name, extract_fn, limit):
@@ -11,27 +11,51 @@ def createDataset(name, extract_fn, limit):
 
     db = sqlite3.connect("data/1990")
     c = db.cursor()
-    songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
-                            FROM songs WHERE lyrics is not NULL {}'''.format(limit)).fetchall()
+    train_songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
+                            FROM songs WHERE lyrics is not NULL {}
+                            AND date(last_date) < date('2015-01-01')'''.format(limit)).fetchall()
 
-    titles = []
-    raw_scores = []
-    raw_features = []
+    test_songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
+                            FROM songs WHERE lyrics is not NULL {}
+                            AND date(last_date) >= date('2015-01-01')'''.format(limit)).fetchall()
+
+
+    songs = train_songs + test_songs
 
     print "Getting doc counts for words"
     total_doc_count = docCounts(songs)
 
-    for i, s in enumerate(songs):
-        raw_features.append(extract_fn(s, total_doc_count))
-        raw_scores.append(calculateScore(s))
-        titles.append(s[0])
-        if i % 100 == 0: 
-            print "Features done: ", i 
+    def _operate(s):
+        title = s[0]
+        features = extract_fn(s, total_doc_count)
+        score = calculateScore(s)
+        return (title, features, score)
+
+    def _getTFS(raw_set):
+        p = Pool(10)
+        return p.map(_operate, raw_set)
+
+    def getTitlesFeaturesScores(raw_set):
+        titles = []
+        X = []
+        Y = []
+        threads = []
+        for i, s in enumerate(raw_set):
+            X.append(extract_fn(s, total_doc_count))
+            Y.append(calculateScore(s))
+            titles.append(s[0])
+            if i % 25 == 0: 
+                print "Features done: ", i 
+
+        return titles, X, Y
+
+    titles_train, X_train, Y_train = getTitlesFeaturesScores(train_songs)
+    titles_test, X_test, Y_test = getTitlesFeaturesScores(test_songs)
 
     print "Caching features..."
-    cacheDataset(name, titles, raw_features, raw_scores)
+    cacheDataset(name, titles_train, X_train, Y_train, titles_test, X_test, Y_test)
     print "Done"
-    return titles, raw_features, raw_scores
+    return titles_train, X_train, Y_train, titles_test, X_test, Y_test
 
 def calculateScore(song):
     # Normalizes best score and multiplies by number of weeks
@@ -54,28 +78,26 @@ def docCounts(songs):
             doc_count[word] += 1
     return doc_count
 
-def cacheDataset(f, titles, features, scores):
+def cacheDataset(f, titles_train, X_train, Y_train, titles_test, X_test, Y_test):
     # Writes raw data to file
     with open(f, "w") as f:
-        f.write(str(titles) + "\n")
-        f.write(str(features) + "\n")
-        f.write(str(scores))
+        f.write(str(titles_train) + "\n")
+        f.write(str(X_train) + "\n")
+        f.write(str(Y_train) + "\n")
+        f.write(str(titles_test) + "\n")
+        f.write(str(X_test) + "\n")
+        f.write(str(Y_test))
 
 def getCachedDataset(f):
     # Reads raw data using ast from file
     with open(f, "r") as f:
-        titles = ast.literal_eval(f.readline())
-        raw_features = ast.literal_eval(f.readline())
-        scores = ast.literal_eval(f.readline())
-    return titles, raw_features, scores
-
-def visualizeScores(scores):
-    # Provides histogram of scores
-    hist, bins = np.histogram(scores, bins=50)
-    width = 0.7 * (bins[1] - bins[0])
-    center = (bins[:-1] + bins[1:]) / 2
-    plt.bar(center, hist, align='center', width=width)
-    plt.show()
+        titles_train = ast.literal_eval(f.readline())
+        X_train = ast.literal_eval(f.readline())
+        Y_train = ast.literal_eval(f.readline())
+        titles_test = ast.literal_eval(f.readline())
+        X_test = ast.literal_eval(f.readline())
+        Y_test = ast.literal_eval(f.readline())
+    return titles_train, X_train, Y_train, titles_test, X_test, Y_test
 
 def parseEmoLex(path):
     # Generates dictionary from Emolex

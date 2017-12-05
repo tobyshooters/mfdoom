@@ -29,65 +29,94 @@ RESULTS:
 ### THIS IS FAKE NEWS ######################################
 
 LINEAR REGRESSION, NO REGULARIZATION
-Eta: 100, 200, ... 1000
-Batch: 10, 60, ... 260
-
-Best MSE:  ((500, 160), (0.022724324069957769, 0.12219747045024985))
-Test:                   [0.024850266659435842, 0.12438657282525477]
-
-Best MAE:  ((700, 110), (0.022831983066513836, 0.12204506947319217))
-Test:                   [0.067142154286588041, 0.17473956744504882]
+- 600, 160: Train: loss: 0.0767 - mean_absolute_error: 0.2338
+            Test:  [0.16130966013524589, 0.35934767824847524]
 
 LINEAR REGRESSION WITH REGULARIZATION, FIXED @ 500, 160
-{0.001: [0.035338469546883217, 0.13143438181946368],
- 0.01: [0.026493842410981763, 0.12361872852010865],
- 0.1: [0.041973131328496657, 0.150110208322911],
- 1: [0.071950444268796279, 0.15600183008478688]}
-TEST 0.01:  [0.030112404329112812, 0.12209215128346335]
-
 SINGLE-LAYER NEURAL NETWORK
-Eta: 500, 600, 700
-Batch: 80, 100, ... 180
-
-Best MSE:  ((9, 500, 160), [0.023045934205993119, 0.12261950605956266])
-Best MAE:  ((9, 500, 160), [0.023045934205993119, 0.12261950605956266])
-Test:                      [0.084720803401138203, 0.16915178236076098]
-
-CHANGE OF SCORING VALUES TO PERCENTILE IN ORDER TO GET SPREAD OF DATA
-ETA 500, BATCH 160, 9 HIDDEN NODES
-LR:  [0.094442274091364464, 0.24003051642627152]
-NN:  [0.080238319901977412, 0.24034387061867532]
-
-BEST ETA, BATCH FOR LR IS 700, 265
-AROUND THE SAME FOR NN
-
-### END OF FAKE NEWS ######################################
-
-LINEAR REGRESSION
-Best Overall:  ((600, 650), [0.080293487657893722, 0.24391426211000328])
-TEST @ 600, 650:            [0.089057008084518455, 0.25963867100235682]
-
 NEURAL NETWORK, TESTING FOR OPTIMAL HIDDEN NODES
-Best Overall:  ((5, 2100, 150), [0.077542537438215584, 0.23912770201552938])
-TEST:                           [0.0934672295268065, 0.26089530598883537]
-
 DEEP NEURAL NETWORK
-TEST:  [0.08634052766499177, 0.25422567538186613]
-
 RECURRENT
-restructured data, each line is the data, giving 200 datapoints per song for 3300 songs
-padding and cutting of data
-TEST dropout, recurrent_dropout = 0.2, nodes=10: [0.093869677410016658, 0.26551036819133883]
 
-IT ALWAYS SEEMS TO BE PREDICTION AROUND 0.5 += 0.15
+#######################################################################################
 
-MORE FEATURES
-https://publik.tuwien.ac.at/files/PubDat_166272.pdf
-!_count
-not_words
-distinct per line
-salience via tf_idf
-richness
-common_words
+INTRODUCTION
+With the recent surge in popularity of artists such as Lil Pump, Desiigner, and Lil Yachty, many "hip hop heads" have found themselves confused. Hip-hop has historically focused on spitting bars, with artist such as Eminem, Kendrick Lamar, and A Tribe Called Quest reigning as the greatest lyricists of all time. Nevertheless, as of late the songs most played according to Billboards charts and Spotify rankings show very little lyrical prowess, just look at the lyrics of "Gucci Gang", the current #3 song on the Hot 100 Billboard. In an attempt to understand this transition, I used ANN and RNN to predict commercial success of tracks based on their lyrics.
 
-MORE DATA, SPLIT TRAINING ON LAST 2 YEARS
+APPROACH
+The task being tackled is predicting the popularity of hip-hop songs based on their lyrics, using Billboard charts as a heuristic for commerical success. Lyrical features of songs in the three major categories of semantics, structure, and vocabulary were extracted. The ideal end model that will be used is an ensemble of a recurrent neural-network (RNN) with a traditional neural network (ANN).
+Ideally, the ANN would take into consideration features related to the totality of a song, such as lexical richness and song structure, while the RNN would be able to extrapolate on the sequentiality of lyrics, e.g. repeated catch lines.
+
+For the initial tests, a simple Linear Regression was used as a baseline for the more complex approaches. Then, sucessive layers were added to the model to test for correlations between features. For the ANN and DNN, tests were run on different combinations of hyperparameters and regularizations to minimize both the mean squared error and the mean absolute error. Then, an RNN was trained on the sequential data. Finally, an ensemble composing the best ANN and RNN was used.
+
+[Image of Neural Network, with example of features]
+[Image of RNN, with example of sequence features]
+[Image explaining composition of ensemble]
+
+FEATURE EXTRACTION
+The key to the success of the predictor is consequently making the features as expressive as possible. 
+[List of features, exemplified by Gucci Gang and m.A.A.d City]
+
+The following graphs highlight the distribution of some of these features among the data points.
+[ Graphs with Score X Feature value, for train vs test ]
+
+Scores:
+- To make the score proportional to the peak score and the time of charts, we have (101-peakPos)^2/10000 which maps a peak score of 1 to 1 and a peak score of 100 to nearly zero. That is multiplied by the # of weeks on the chart. Finally, to make the data set horizontal, I used the percentiles of each score rather than the actual score to compare relative rank.
+[Graph comparing percentile vs Actual Score]
+
+ANN Features:
+Semantics:
+- Percentage of affect categories according to Emolex
+- Percentage of parts of speech according to NLTK universal tagset
+Structure:
+- Percentage of verse types: Chorus, Verse
+- Number of stanzas
+- Avg number of lines per stanza
+- Number of lines
+- Average number of words per line
+Vocabulary:
+- Total word count
+- Total distinct words, distinct words per line
+- Lexical Richness: distinct / total
+- Vocabualry Salience via tf_idf
+- !, ?, and Digit counts
+- Proportion of uncommon words or sounds, e.g. Ooou
+- Proportion usage of i, we, us, love, bitch, fuck, money, rap
+
+RNN Features:
+Per line:
+Semantics:
+- Percentage of affect categories according to Emolex
+- Percentage of parts of speech according to NLTK universal tagset
+Vocabulary:
+- Total word count
+- Total distinct words, distinct words per line
+- Lexical Richness: distinct / total
+- Vocabualry Salience via tf_idf
+- !, ?, and Digit counts
+- Proportion of uncommon words or sounds, e.g. Ooou
+
+DATA PIPELINE AND INFRASTRUCTURE
+The songs to be analyzed with their respective peak rank and time on the charts were pulled from the Rap and RnB/Hip Hop Billboard charts using an unofficial API. Then, using the Genius search api and webscraping, the lyrics of each song was obtained. This raw dataset was stored in a in-memory Sqlite database. Then, features were extracted for each song.
+This gave a total of 4491 songs from 1995 onwards, split into train, validate and test sets. 
+Test = 2015 onwards
+Train = 0.8, Validate = 0.2
+
+Create features for each, transform into sparse matrix.
+For recurrent training, sequences of fixed length must be built. I considered the first 200 lines, and padded those who didn't reach.
+
+From there Keras with a TensorFlow backend was used to implement and train the models.
+
+RESULTS AND ANALYSIS
+- Init: abysmal, 579 dimension vs 1300 samples
+- More data 1995, without popular words to reduce max dimensionality
+- Messed up feature extraction smh
+
+REFERENCES AND ACKNOWLEDGEMENTS
+Lyrics: Genius API docs.genius.com
+Billboard: extra-official API github.com/guoguo12/billboard-charts
+Feature Inspiration: https://publik.tuwien.ac.at/files/PubDat_166272.pdf
+Hidden Layer Heuristics: https://stats.stackexchange.com/questions/181/how-to-choose-the-number- of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
+Semantics: NRC Word-Emotion Lexicon (EmoLex) will be used to associated the lyrics to emotions.
+EmoLex: arxiv.org/pdf/1308.6297.pdf
+
