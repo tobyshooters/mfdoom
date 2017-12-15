@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import math
 # Consistent testing
 np.random.seed(7)
 tf.set_random_seed(7)
@@ -11,12 +12,17 @@ from sklearn.model_selection import train_test_split
 import pprint
 pp = pprint.PrettyPrinter()
 import features_nn
+import visualize
 
 print "Extracting features..."
 # Temporal features 
-titles_train, X_train, Y_train, titles_test, X_test, Y_test, X_all, Y_all = features_nn.getFeatures(cached=True, limit="")
+titles_train, X_train, Y_train, titles_test, X_test, Y_test, X_all, Y_all = features_nn.getFeatures(True, "data/nn2_features", "")
 X_train, X_val, Y_train, Y_val = train_test_split(X_train, Y_train, test_size=0.3, random_state=3)
 print "Done."
+
+# Visualize stuff
+# visualize.visualizeScores(Y_train)
+# print sum(Y_train)/len(Y_train)
 
 dim = X_train.shape[1]
 
@@ -48,14 +54,6 @@ def deepNeuralNetwork():
 
 def evaluateModel(m, val=False, eta=1000, batch=200):
     # Runs model given parameters
-    print "Test = 2015+"
-    m.fit(X_train.todense(), Y_train, epochs=eta, batch_size=batch, 
-            verbose=1, shuffle=False)
-    if val:
-        results =  m.evaluate(X_val.todense(), Y_val, verbose=0)
-    else:
-        results =  m.evaluate(X_test.todense(), Y_test, verbose=0)
-
     print "Test = random"
     m.fit(X_rand_train.todense(), Y_rand_train, epochs=eta, batch_size=batch, 
             verbose=1, shuffle=False)
@@ -64,18 +62,23 @@ def evaluateModel(m, val=False, eta=1000, batch=200):
     else:
         results_rand =  m.evaluate(X_rand_test.todense(), Y_rand_test, verbose=0)
 
+    print "Test = 2015+"
+    m.fit(X_train.todense(), Y_train, epochs=eta, batch_size=batch, 
+            verbose=1, shuffle=False)
+    if val:
+        results =  m.evaluate(X_val.todense(), Y_val, verbose=0)
+    else:
+        results =  m.evaluate(X_test.todense(), Y_test, verbose=0)
+
+
     # prediction = m.predict(X_test.todense())
     # for i, predict in enumerate(prediction):
-    #     print "--------------------------------"
-    #     print "Title:      ", titles_test[i]
-    #     print "Prediction: ", predict
-    #     print "Actual:     ", Y_test[i]
-    #     print "--------------------------------"
-
-    # pp.pprint(m.summary())
-    # for layer in m.layers:
-    #     pp.pprint(layer.get_config())
-    #     pp.pprint(layer.get_weights()[0])
+    #     if abs(predict - Y_test[i]) < 0.1:
+    #         print "--------------------------------"
+    #         print "Title:      ", titles_test[i]
+    #         print "Prediction: ", predict
+    #         print "Actual:     ", Y_test[i]
+    #         print "--------------------------------"
 
     return results, results_rand
 
@@ -130,11 +133,11 @@ def hiddenOptimizeNeural():
     pp.pprint(result)
     resultAnalysis(result)
 
-# hiddenOptimizeNeural()
-# lr = linearRegression(0)
-nn = deepNeuralNetwork()
-# for i in range(5):
-# res_lr, res_lr_rand = evaluateModel(lr, False, 1000, 200)
-res_nn, res_nn_rand = evaluateModel(nn, False, 4000, 150)
-# print "LR: ", res_lr, res_lr_rand
-print "NN: ", res_nn, res_nn_rand
+lr = linearRegression(0)
+# nn = neuralNetwork()
+res_lr, res_lr_rand = evaluateModel(lr, False, 800, 200)
+# res_nn, res_nn_rand = evaluateModel(nn, False, 1000, 150)
+print "LR Temporal Split: ", res_lr
+print "LR Random Distrib: ", res_lr_rand
+# print "NN Temporal Split: ", res_nn
+# print "NN Random Distrib: ", res_nn_rand

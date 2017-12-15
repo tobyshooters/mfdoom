@@ -117,24 +117,27 @@ def extractFeatures(song, total_doc_count):
     util.normalize_vector(pos_counts)
 
     # pp.pprint(util.merge_dicts(verse_types, affect_categories, pos_counts, features))
-    return util.merge_dicts(verse_types, 
-                            affect_categories, 
-                            pos_counts, 
-                            common_words,
-                            features)
+    return util.merge_dicts(
+            verse_types, 
+            affect_categories, 
+            pos_counts,
+            features)
 
-def getFeatures(cached, limit):
-    if cached:
-        print "Getting raw features from cache"
-        titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.getCachedDataset("data/nn2_features")
-    else:
+
+def getFeatures(cached, database, limit):
+    if not cached:
         print "Not cached, producing new features"
-        titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.createDataset("data/nn2_features", extractFeatures, limit)
+        util.createDataset(database, extractFeatures, limit)
+
+    print "Getting raw features from cache"
+    titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.getCachedDataset(database)
 
     vec = DictVectorizer()
     vec.fit(X_train + X_test)
     X_all = vec.transform(X_train + X_test)
+    pp.pprint(X_train[0])
     X_train = vec.transform(X_train)
+    print X_train[0]
     X_test = vec.transform(X_test)
 
     Y_total = Y_train + Y_test
@@ -143,5 +146,3 @@ def getFeatures(cached, limit):
     Y_all = np.array([stats.percentileofscore(Y_total, a, 'rank') / 100.0 for a in Y_total])
 
     return titles_train, X_train, np.reshape(Y_train, (len(Y_train), 1)), titles_test, X_test, np.reshape(Y_test, (len(Y_test), 1)), X_all, Y_all
-
-util.exampleSongs(extractFeatures)

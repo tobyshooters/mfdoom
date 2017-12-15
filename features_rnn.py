@@ -87,10 +87,9 @@ def extractFeatures(song, total_doc_count):
     return song_temporal_features
 
 def getFeatures(cached, limit):
-    if cached:
-        titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.getCachedDataset("data/rnn_features")
-    else:
-        titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.createDataset("data/rnn_features", extractFeatures, limit)
+    if not cached:
+        util.createDataset("data/rnn_features", extractFeatures, limit)
+    titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.getCachedDataset("data/rnn_features")
 
     vec = DictVectorizer()
     total_features = X_train + X_test

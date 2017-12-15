@@ -1,3 +1,9 @@
+features + pos_counts
+LR Temporal Split:  [0.19422501071197232, 0.38852733766160358]
+LR Random Distrib:  [0.097701677461949785, 0.28162787309507042]
+
+
+########################################################################################
 To Do:
 1. X More data from rap-songs
 2. X Parts-of-speech parameters

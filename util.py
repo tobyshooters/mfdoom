@@ -8,29 +8,18 @@ pp = pprint.PrettyPrinter()
 from multiprocessing import Pool
 import numpy as np
 
-def exampleSongs(extract_fn):
-    db = sqlite3.connect("data/1990")
-    c = db.cursor()
-    train_songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
-                            FROM songs WHERE lyrics is not NULL
-                            AND title LIKE 'Gucci Gang' OR title LIKE 'm.A.A.d City' ''').fetchall()
-    for song in train_songs:
-        print song[0]
-        pp.pprint(extract_fn(song, defaultdict(int)))
-
-
 def createDataset(name, extract_fn, limit):
     print "Features set: ", name
 
     db = sqlite3.connect("data/1990")
     c = db.cursor()
     train_songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
-                            FROM songs WHERE lyrics is not NULL {}
-                            AND date(last_date) < date('2015-01-01')'''.format(limit)).fetchall()
+                            FROM songs WHERE lyrics is not NULL 
+                            AND date(last_date) < date('2015-01-01') {}'''.format(limit)).fetchall()
 
     test_songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
-                            FROM songs WHERE lyrics is not NULL {}
-                            AND date(last_date) >= date('2015-01-01')'''.format(limit)).fetchall()
+                            FROM songs WHERE lyrics is not NULL
+                            AND date(last_date) >= date('2015-01-01') {}'''.format(limit)).fetchall()
 
 
     songs = train_songs + test_songs
@@ -68,7 +57,6 @@ def createDataset(name, extract_fn, limit):
     print "Caching features..."
     cacheDataset(name, titles_train, X_train, Y_train, titles_test, X_test, Y_test)
     print "Done"
-    return titles_train, X_train, Y_train, titles_test, X_test, Y_test
 
 def calculateScore(song):
     # Normalizes best score and multiplies by number of weeks
@@ -111,6 +99,16 @@ def getCachedDataset(f):
         X_test = ast.literal_eval(f.readline())
         Y_test = ast.literal_eval(f.readline())
     return titles_train, X_train, Y_train, titles_test, X_test, Y_test
+
+def exampleSongs(extract_fn):
+    db = sqlite3.connect("data/1990")
+    c = db.cursor()
+    train_songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
+                            FROM songs WHERE lyrics is not NULL
+                            AND title LIKE 'Gucci Gang' OR title LIKE 'm.A.A.d City' ''').fetchall()
+    for song in train_songs:
+        print song[0]
+        pp.pprint(extract_fn(song, defaultdict(int)))
 
 def parseEmoLex(path):
     # Generates dictionary from Emolex

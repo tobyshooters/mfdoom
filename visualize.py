@@ -5,19 +5,20 @@ import matplotlib.pyplot as plt
 import pprint
 pp = pprint.PrettyPrinter()
 
-titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.getCachedDataset("data/nn_features")
+# titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.getCachedDataset("data/nn_features")
 
-def visualizeScores(name, scores):
+def visualizeScores(scores):
     # Provides histogram of scores
     hist, bins, patches = plt.hist(scores, bins=50, edgecolor='black', linewidth=2)
     for p in patches:
         p.set_color('#F06666')
-    plt.savefig(name)
+    # plt.savefig(name)
+    plt.show()
 
-Y_total = Y_train + Y_test
+# Y_total = Y_train + Y_test
 # Y_perc_total = [stats.percentileofscore(Y_total, a, 'rank') / 100.0 for a in Y_total]
-Y_perc_train = [stats.percentileofscore(Y_total, a, 'rank') / 100.0 for a in Y_train]
-Y_perc_test = [stats.percentileofscore(Y_total, a, 'rank') / 100.0 for a in Y_test]
+# Y_perc_train = [stats.percentileofscore(Y_total, a, 'rank') / 100.0 for a in Y_train]
+# Y_perc_test = [stats.percentileofscore(Y_total, a, 'rank') / 100.0 for a in Y_test]
 
 # visualizeScores("images/Y_total.jpg", Y_total)
 # visualizeScores("images/Y_perc.jpg", Y_perc_total)
@@ -57,4 +58,4 @@ def analyzeFeatures():
 
             scatterPlot(feat, x_scat_train, y_scat_train, x_scat_test, y_scat_test)
 
-analyzeFeatures()
+# analyzeFeatures()
