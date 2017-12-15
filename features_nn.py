@@ -6,6 +6,7 @@ import ast
 import pprint
 pp = pprint.PrettyPrinter()
 import util
+import feature_util
 import numpy as np
 from scipy import stats
 from sklearn.feature_extraction import DictVectorizer
@@ -127,10 +128,10 @@ def extractFeatures(song, total_doc_count):
 def getFeatures(cached, database, limit):
     if not cached:
         print "Not cached, producing new features"
-        util.createDataset(database, extractFeatures, limit)
+        feature_util.createDataset(database, extractFeatures, limit)
 
     print "Getting raw features from cache"
-    titles_train, X_train, Y_train, titles_test, X_test, Y_test = util.getCachedDataset(database)
+    titles_train, X_train, Y_train, titles_test, X_test, Y_test = feature_util.getCachedDataset(database)
 
     vec = DictVectorizer()
     vec.fit(X_train + X_test)
