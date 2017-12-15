@@ -7,10 +7,10 @@ Code:
 - `features/features_util.py` contains the overlapping logic for ANN and RNN feature extraction
 - `baseline.py` performs trivial baseline calculations on the dataset
 - `cluster.py` has logic for K-means clustering of the datapoints for additional analysis
-- `visualize.py` generates plots of features and clusters
 - `scraper/songs.py` extracts song titles from Billboards and stores them in a local database
 - `scraper/lyrics.py` scrapes lyrics off of the Genius website
-- `util.py` contains general utilities used throughout the project
+- `misc/visualize.py` generates plots of features and clusters
+- `misc/util.py` contains general utilities used throughout the project
 
 Datasets:
 - `data/1990` is a SQLite dataset containing songs (title, artist, peak position, time on charts, raw lyrics)
