@@ -11,3 +11,10 @@ name = "pypi"
 
 [packages]
 
+tensorflow = "*"
+keras = "*"
+numpy = "*"
+scipy = "*"
+sklearn = "*"
+matplotlib = "*"
+nltk = "*"
