@@ -6,8 +6,8 @@ import tensorflow as tf
 import numpy as np
 import pprint
 pp = pprint.PrettyPrinter()
-import features_rnn
-import features_nn
+import features.rnn
+import features.nn
 import util
 
 # Consistent testing
@@ -16,7 +16,7 @@ tf.set_random_seed(7)
 
 print "Extracting features..."
 # Temporal Features
-titles_train, X_train, Y_train, titles_test, X_test, Y_test, X_all, Y_all = features_rnn.getFeatures(cached=True, limit="")
+titles_train, X_train, Y_train, titles_test, X_test, Y_test, X_all, Y_all = features.rnn.getFeatures(cached=True, limit="")
 X_train, X_val, Y_train, Y_val = train_test_split(X_train, Y_train, test_size=0.2, random_state=3)
 print "Done."
 
@@ -29,7 +29,7 @@ X_rand_train, X_rand_test, Y_rand_train, Y_rand_test = train_test_split(X_all, Y
 X_rand_val, X_rand_test, Y_rand_val, Y_rand_test = train_test_split(X_test, Y_test, test_size=0.4, random_state=3)
 
 # Total Song Features
-_, X_tot_train, Y_tot_train, _, X_tot_test, Y_tot_test, X_tot_all, Y_tot_all = features_nn.getFeatures(cached=True, limit="")
+_, X_tot_train, Y_tot_train, _, X_tot_test, Y_tot_test, X_tot_all, Y_tot_all = features.nn.getFeatures(cached=True, limit="")
 X_tot_train, X_tot_val, Y_tot_train, Y_tot_val = train_test_split(X_tot_train, Y_tot_train, test_size=0.3, random_state=3)
 
 # Total Song Random

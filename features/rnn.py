@@ -5,7 +5,7 @@ import ast
 import pprint
 pp = pprint.PrettyPrinter()
 import util
-import feature_util
+import features_util
 import numpy as np
 import math
 from scipy import stats
@@ -89,8 +89,8 @@ def extractFeatures(song, total_doc_count):
 
 def getFeatures(cached, limit):
     if not cached:
-        feature_util.createDataset("data/rnn_features", extractFeatures, limit)
-    titles_train, X_train, Y_train, titles_test, X_test, Y_test = feature_util.getCachedDataset("data/rnn_features")
+        features_util.createDataset("data/rnn_features", extractFeatures, limit)
+    titles_train, X_train, Y_train, titles_test, X_test, Y_test = features_util.getCachedDataset("data/rnn_features")
 
     vec = DictVectorizer()
     total_features = X_train + X_test

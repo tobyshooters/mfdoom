@@ -11,12 +11,12 @@ from scipy.sparse import vstack
 from sklearn.model_selection import train_test_split
 import pprint
 pp = pprint.PrettyPrinter()
-import features_nn
+import features.nn as features
 import visualize
 
 print "Extracting features..."
 # Temporal features 
-titles_train, X_train, Y_train, titles_test, X_test, Y_test, X_all, Y_all = features_nn.getFeatures(True, "data/nn2_features", "")
+titles_train, X_train, Y_train, titles_test, X_test, Y_test, X_all, Y_all = features.getFeatures(True, "data/nn2_features", "")
 X_train, X_val, Y_train, Y_val = train_test_split(X_train, Y_train, test_size=0.3, random_state=3)
 print "Done."
 
