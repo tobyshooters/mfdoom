@@ -11,7 +11,7 @@ import numpy as np
 def createDataset(name, extract_fn, limit):
     print "Features set: ", name
 
-    db = sqlite3.connect("data/1990")
+    db = sqlite3.connect("data/1995")
     c = db.cursor()
     train_songs = c.execute(''' SELECT title, artist, lyrics, peak, weeks 
                             FROM songs WHERE lyrics is not NULL 
