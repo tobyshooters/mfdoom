@@ -4,7 +4,7 @@ import re
 import ast
 import pprint
 pp = pprint.PrettyPrinter()
-import util
+import misc.util as util
 import features_util
 import numpy as np
 import math

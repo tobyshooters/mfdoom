@@ -8,7 +8,6 @@ import pprint
 pp = pprint.PrettyPrinter()
 import features.rnn
 import features.nn
-import util
 
 # Consistent testing
 np.random.seed(7)

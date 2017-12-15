@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 import pprint
 pp = pprint.PrettyPrinter()
 import features.nn as features
-import visualize
+import misc.visualize as visualize
 
 print "Extracting features..."
 # Temporal features 
