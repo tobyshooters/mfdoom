@@ -3,6 +3,7 @@ from collections import defaultdict, Counter
 import sqlite3
 import re
 import ast
+import math
 import nltk
 from nltk.tokenize import RegexpTokenizer
 from sklearn.cluster import KMeans
@@ -56,20 +57,20 @@ def extractFeatures(song):
 
     features = {
             "word_count": total,
-            "distinct_words": distinct,
-            "distinct_words_per_line": distinct / line_count,
+            # "distinct_words": distinct,
+            # "distinct_words_per_line": distinct / line_count,
             "richness": distinct / total,
-            "stanzas": number_stanzas,
-            "avg_stanzas": total / number_stanzas,
-            "lines": line_count,
-            "avg_line": total / line_count
+            # "stanzas": number_stanzas,
+            # "avg_stanzas": total / number_stanzas,
+            # "lines": line_count,
+            # "avg_line": total / line_count
             }
 
     # Normalization
     util.normalize_vector(verse_types)
     util.normalize_vector(affect_categories)
     util.normalize_vector(pos_counts)
-    return  util.merge_dicts(verse_types, affect_categories, pos_counts, features)
+    return  util.merge_dicts(features)
 
 def createDataset(extract_fn, limit):
     db = sqlite3.connect("data/1990")
@@ -103,11 +104,12 @@ def lossCluster(centroid, values):
     total_loss = 0
     num = 0
     for val in values:
-        total_loss += dist.euclidean(centroid, val.todense())
+        total_loss += math.sqrt(dist.euclidean(centroid, val.todense()))
         num += 1
-    print "Number:       ", num
-    print "Total Loss:   ", total_loss
-    print "Average Loss: ", total_loss * 1.0 / num
+    # print "Number:       ", num
+    # print "Total Loss:   ", total_loss
+    # print "Average Loss: ", total_loss * 1.0 / num
+    return total_loss * 1.0 / num
 
 def cluster():
     # createDataset(extractFeatures, "")
@@ -119,18 +121,22 @@ def cluster():
     scaler = MaxAbsScaler()
     scaled_X = scaler.fit_transform(sparse_X)
 
-    for i in range(8, 8):
+    for i in [1, 9, 10, 11]:
         km = KMeans(n_clusters=i, max_iter=300, n_init=5)
         km.fit(scaled_X)
 
         print "========================================================="
         print "Number of Clusters", i, km.inertia_
 
+        losses = []
         for cluster, cluster_val in enumerate(km.cluster_centers_):
-            print "------------------------"
-            print "Cluster:      ", cluster
-            lossCluster(cluster_val, [scaled_X[n] for n, label in enumerate(km.labels_) if label == cluster])
-            # num_elems = sum([1 for n, label in enumerate(km.labels_) if label == cluster])
+            # print "------------------------"
+            # print "Cluster:      ", cluster
+            loss = lossCluster(cluster_val, [scaled_X[n] for n, label in enumerate(km.labels_) if label == cluster])
+            losses += [loss]
+        # print "------------------------"
+        print "Average (Average Loss) per Cluster"
+        print sum(losses)/len(losses)
 
 if __name__ == '__main__':
     cluster()
