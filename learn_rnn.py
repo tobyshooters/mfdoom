@@ -28,7 +28,7 @@ X_rand_train, X_rand_test, Y_rand_train, Y_rand_test = train_test_split(X_all, Y
 X_rand_val, X_rand_test, Y_rand_val, Y_rand_test = train_test_split(X_test, Y_test, test_size=0.4, random_state=3)
 
 # Total Song Features
-_, X_tot_train, Y_tot_train, _, X_tot_test, Y_tot_test, X_tot_all, Y_tot_all = features.nn.getFeatures(cached=True, limit="")
+_, X_tot_train, Y_tot_train, _, X_tot_test, Y_tot_test, X_tot_all, Y_tot_all = features.nn.getFeatures(True,"data/nn2_features", "")
 X_tot_train, X_tot_val, Y_tot_train, Y_tot_val = train_test_split(X_tot_train, Y_tot_train, test_size=0.3, random_state=3)
 
 # Total Song Random
@@ -88,9 +88,7 @@ def evaluateEnsemble(ens):
 
     return results, results_rand
 
-print "ENSEMBLE"
-ens = ensemble()
-res = evaluateEnsemble(ens)
-print "ENSEMBLE"
+rnn = RNN()
+res = evaluateModel(rnn)
 print "TEMPORAL", res[0]
 print "RANDOM", res[1]

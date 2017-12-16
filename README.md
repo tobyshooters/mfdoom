@@ -1,11 +1,12 @@
 ### Gucci Gang and the Rise of Mumble Rap
 #### An ensemble ANN-RNN approach to analyzing hip-hop song lyrics
 
+Final paper: `docs/final.pdf`
+
 To run:
-- Clone repository
-- `pipenv install`
-- `pipenv shell`
-- `python learn_nn.py`
+- `pipenv install` to install all project dependencies
+- `pipenv shell` to initialize the virtual environment
+- `python learn_nn.py` to run the ANN learning
 
 Code:
 - `learn_nn.py` and `learn_rnn.py` are the bulk of the machine learning of the project
