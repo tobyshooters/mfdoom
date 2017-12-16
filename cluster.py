@@ -1,4 +1,4 @@
-import util
+import misc.util as util
 from collections import defaultdict, Counter
 import sqlite3
 import re
@@ -119,7 +119,7 @@ def cluster():
     scaler = MaxAbsScaler()
     scaled_X = scaler.fit_transform(sparse_X)
 
-    for i in range(3, 20):
+    for i in range(8, 8):
         km = KMeans(n_clusters=i, max_iter=300, n_init=5)
         km.fit(scaled_X)
 
